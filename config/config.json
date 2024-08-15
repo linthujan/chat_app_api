@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "nsr_electromart",
+    "password": "NyEyoS85k3Dz-yf1",
+    "database": "nsr_electromart",
+    "host": "18.142.254.109",
+    "dialect": "mysql"
+  },
+  "local": {
+    "username": "root",
+    "password": null,
+    "database": "chat_app",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "nsr_electromart",
+    "password": "FVeHv!oUGANDv-k)",
+    "database": "nsr_electromart",
+    "host": "13.250.96.214",
+    "dialect": "mysql"
+  }
+}
