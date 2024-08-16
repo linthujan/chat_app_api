@@ -1,4 +1,5 @@
 module.exports.NO_PARAMS = "Required body parameters or queries are missing";
+module.exports.OWNER_ONLY_ACTION = "This action can only be completed by the resource's owner.";
 
 module.exports.STATUS_CODE = {
     CONTINUE: 100,

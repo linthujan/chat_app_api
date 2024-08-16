@@ -1,12 +1,14 @@
 'use strict';
 const { Model } = require('sequelize');
-const { defaultKeys, modelDefaults } = require('../sequelizeDefaults');
+const { defaultKeys, modelDefaults } = require('../sequelize/defaults');
+/** @param {import("sequelize").DataTypes} DataTypes */
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
       User.belongsToMany(models.Chat, {
         through: {
           model: models.UserChat,
+          unique: false,
         },
         foreignKey: 'user_id',
         sourceKey: 'user_id',
@@ -14,10 +16,19 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: 'chat_id',
         as: 'chats',
       });
-      User.hasMany(models.Message, {
-        foreignKey: 'user_id',
+      // User.hasMany(models.Message, {
+      //   foreignKey: 'user_id',
+      //   sourceKey: 'user_id',
+      // });
+      User.hasOne(models.Asset, {
+        foreignKey: 'owner_id',
         sourceKey: 'user_id',
-      })
+        constraints: false,
+        scope: {
+          type: 'USER_PROFILE',
+        },
+        as: 'image',
+      });
     }
   }
   User.init({
@@ -26,9 +37,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
-      validate: {
-        notEmpty: true
-      },
     },
     mobile: {
       type: DataTypes.STRING,

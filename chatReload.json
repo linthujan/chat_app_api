@@ -1,0 +1,49 @@
+{
+    "id": 2,
+    "chat_id": "c45293c7-d614-42b1-98a5-18fc64a1a28f",
+    "name": "Test Group",
+    "type": "GROUP",
+    "created_at": "2024-08-16T06:48:38.000Z",
+    "updated_at": "2024-08-16T06:48:38.000Z",
+    "deleted_at": null,
+    "admins": [
+        {
+            "id": 1,
+            "user_id": "d64f14b2-d0d8-490f-8996-043ee66fb58b",
+            "username": "Test1",
+            "mobile": "123",
+            "created_at": "2024-08-16T06:42:50.000Z",
+            "updated_at": "2024-08-16T06:42:50.000Z",
+            "deleted_at": null,
+            "UserChat": {
+                "id": 2,
+                "user_chat_id": "0a3c66cf-34b8-415c-90c8-f88d071a422f",
+                "type": "ADMIN",
+                "created_at": "2024-08-16T06:48:38.000Z",
+                "updated_at": "2024-08-16T06:48:38.000Z",
+                "chat_id": "c45293c7-d614-42b1-98a5-18fc64a1a28f",
+                "user_id": "d64f14b2-d0d8-490f-8996-043ee66fb58b"
+            }
+        }
+    ],
+    "members": [
+        {
+            "id": 2,
+            "user_id": "792a0e19-ae18-4d12-8a92-0dc4f04c8086",
+            "username": "Test2",
+            "mobile": "456",
+            "created_at": "2024-08-16T06:42:50.000Z",
+            "updated_at": "2024-08-16T06:42:50.000Z",
+            "deleted_at": null,
+            "UserChat": {
+                "id": 3,
+                "user_chat_id": "0e12ff6a-3ff9-4f58-a21d-7a0757ee6d7b",
+                "type": "MEMBER",
+                "created_at": "2024-08-16T06:48:38.000Z",
+                "updated_at": "2024-08-16T06:48:38.000Z",
+                "chat_id": "c45293c7-d614-42b1-98a5-18fc64a1a28f",
+                "user_id": "792a0e19-ae18-4d12-8a92-0dc4f04c8086"
+            }
+        }
+    ]
+}

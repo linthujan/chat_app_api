@@ -1,7 +1,6 @@
 const { User, Asset } = require('../../models');
-const util = require("../../utils/utility")
 const routeHandler = require('../../utils/routeHandler');
-const { findModelOrThrow, isNullParameters, isEmptyStringParameters, } = require('../../utils/validation');
+const { findModelOrThrow, validateNullParameters, } = require('../../utils/validation');
 const { STATUS_CODE } = require('../../utils/constants');
 const jwt = require('jsonwebtoken');
 
@@ -13,141 +12,78 @@ const create = routeHandler(async (req, res, extras) => {
         },
     } = req;
 
-    isNullParameters([username, mobile,])
+    validateNullParameters([username, mobile,])
 
-    const user = await User.create({
+    const [user, isCreated] = await User.upsert({
         username,
         mobile,
     }, { transaction: extras.transaction });
 
-    const token = jwt.sign({ user_id: user.user_id });
+    const token = jwt.sign({ user_id: user.user_id }, process.env.JWT_SECRET, {
+        expiresIn: '1h',
+    });
+
     return res.sendRes({ user, token }, {
         message: 'User created successfully',
         status: STATUS_CODE.CREATED,
     });
 });
 
-// const getById = routeHandler(async (req, res, extras) => {
-//     const { user_id } = req.params;
+const getAuth = routeHandler(async (req, res, extras) => {
+    const { user_id } = req.auth;
 
-//     const user = await findModelOrThrow({ user_id }, User, {
-//         include: [
-//             {
-//                 model: Asset,
-//                 as: 'profile',
-//             },
-//         ]
-//     });
+    const user = await findModelOrThrow({ user_id }, User, {
+        include: [
+            {
+                model: Asset,
+                as: 'image',
+            },
+        ]
+    });
 
-//     return res.sendRes(user, {
-//         message: 'User found',
-//         status: STATUS_CODE.OK,
-//     });
-// }, false)
+    return res.sendRes(user, {
+        message: 'User found',
+        status: STATUS_CODE.OK,
+    });
+}, false);
 
-// const getAll = routeHandler(async (req, res, extras) => {
-//     const { rows, count } = await User.findAndCountAll({
-//         include: [
-//             {
-//                 model: Asset,
-//                 as: 'profile',
-//             },
-//         ],
-//         ...extras.pagination
-//     })
+const getById = routeHandler(async (req, res, extras) => {
+    const { user_id } = req.params;
 
-//     return res.sendRes(rows, {
-//         message: 'Users loaded successfully',
-//         status: STATUS_CODE.OK,
-//         ...extras.pageData,
-//         count: count,
-//     });
-// }, false);
+    const user = await findModelOrThrow({ user_id }, User, {
+        include: [
+            {
+                model: Asset,
+                as: 'image',
+            },
+        ]
+    });
 
-// const updateById = routeHandler(async (req, res, extras) => {
-//     const { user_id } = req.params;
+    return res.sendRes(user, {
+        message: 'User found',
+        status: STATUS_CODE.OK,
+    });
+}, false);
 
-//     const {
-//         body: {
-//             username,
-//             mobile_no,
-//             email,
-//             first_name,
-//             last_name,
-//             password,
-//             password_confirm,
-//         },
-//         file
-//     } = req;
+const getAll = routeHandler(async (req, res, extras) => {
+    const users = await User.findAll({
+        include: [
+            {
+                model: Asset,
+                as: 'image',
+            },
+        ],
+    })
 
-//     extras.setErrorCallback(() => {
-//         if (file) {
-//             file => util.deleteFile(file.path);
-//         }
-//     })
-
-//     isEmptyStringParameters([username, mobile_no, email, first_name, password, password_confirm]);
-
-//     if (password && password !== password_confirm) {
-//         return sendAppError(extras, "Passwords not match!", STATUS_CODE.BAD_REQUEST);
-//     }
-
-//     const user = await findModelOrThrow({ user_id }, User, {
-//         include: {
-//             model: Asset,
-//             as: 'profile',
-//         }
-//     });
-
-//     await user.update({
-//         username,
-//         mobile_no,
-//         email,
-//         first_name,
-//         last_name,
-//         password,
-//     });
-
-//     const profile = await user.getProfile();
-
-//     if (file && profile) {
-//         await profile.update({
-//             name: file.filename,
-//         }, { transaction: extras.transaction, })
-//     }
-//     else if (file) {
-//         await Asset.create({
-//             owner_id: user.user_id,
-//             name: file.filename,
-//             asset_type: 'user_profile',
-//         }, { transaction: extras.transaction, })
-//     }
-
-//     await extras.transaction.commit();
-
-//     // reload user with profile
-//     return res.sendRes(user, {
-//         message: 'User updated successfully',
-//         status: STATUS_CODE.OK,
-//     });
-// })
-
-// const deleteById = routeHandler(async (req, res, extras) => {
-//     const { user_id } = req.params;
-
-//     const user = await findModelOrThrow({ user_id }, User);
-//     await user.destroy({ transaction: extras.transaction });
-//     await extras.transaction.commit();
-//     return res.sendRes(null, {
-//         message: 'User deleted successfully',
-//         status: STATUS_CODE.OK,
-//     });
-// })
+    return res.sendRes(users, {
+        message: 'Users loaded successfully',
+        status: STATUS_CODE.OK,
+    });
+}, false);
 
 module.exports = {
     create,
-    // getById,
-    // getAll,
-    // updateById,
-    // deleteById,
+    getAuth,
+    getById,
+    getAll,
 }

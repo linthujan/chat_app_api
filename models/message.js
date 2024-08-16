@@ -1,6 +1,7 @@
 'use strict';
 const { Model } = require('sequelize');
-const { defaultKeys, modelDefaults } = require('../sequelizeDefaults');
+const { defaultKeys, modelDefaults } = require('../sequelize/defaults');
+/** @param {import("sequelize").DataTypes} DataTypes */
 module.exports = (sequelize, DataTypes) => {
   class Message extends Model {
     static associate(models) {
@@ -14,12 +15,29 @@ module.exports = (sequelize, DataTypes) => {
         targetKey: 'chat_id',
         as: 'chat',
       });
+      Message.hasOne(models.Asset, {
+        foreignKey: 'owner_id',
+        sourceKey: 'message_id',
+        constraints: false,
+        scope: {
+          type: 'MESSAGE_IMAGE',
+        },
+        as: 'image',
+      });
     }
   }
   Message.init({
     ...defaultKeys("message_id"),
-    name: {
+    type: {
+      type: DataTypes.ENUM(['TEXT', 'IMAGE']),
+      allowNull: false,
+    },
+    text: {
       type: DataTypes.STRING,
+      allowNull: true,
+    },
+    status: {
+      type: DataTypes.ENUM(['FAILED', 'PENDING', 'SENT', 'DELIVERED', 'READ']),
       allowNull: false,
     },
   }, modelDefaults(sequelize, 'messages'));

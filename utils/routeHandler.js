@@ -4,8 +4,8 @@ const paginationHandler = require("./paginationHandler");
 /**
  * ygjhghgh
  * @param {(
- *  req: Request,
- *  res: Response, 
+ *  req: import("express").Request,
+ *  res: import("express").Response, 
  *  extras: {
  *      next:import("express").NextFunction,
  *      transaction:import("sequelize").Transaction,

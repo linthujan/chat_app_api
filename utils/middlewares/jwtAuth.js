@@ -1,10 +1,9 @@
+const { User } = require("../../models");
 const AppError = require("../AppError");
 const { STATUS_CODE } = require("../constants");
 const jwt = require("jsonwebtoken");
 
-module.exports = (req, res, next) => {
-    return next();
-
+module.exports = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -19,11 +18,22 @@ module.exports = (req, res, next) => {
     try {
         console.log(token);
         const payload = jwt.verify(token, process.env.JWT_SECRET);
-        req.auth = payload;
+        console.log(`payload`, payload);
+
+        const user = await User.findOne({
+            where: {
+                user_id: payload.user_id,
+            },
+        });
+
+        if (!user) {
+            return next(new AppError("Invalid Token", STATUS_CODE.UNAUTHORIZED));
+        }
+        req.auth = user;
+
         next();
     } catch (error) {
         console.log(error);
         next(new AppError(error.name, STATUS_CODE.UNAUTHORIZED));
-        // next(error);
     }
 };

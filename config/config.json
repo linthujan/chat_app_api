@@ -7,10 +7,10 @@
     "dialect": "mysql"
   },
   "local": {
-    "username": "root",
-    "password": null,
+    "username": "kelaxa",
+    "password": "kelaxa@123",
     "database": "chat_app",
-    "host": "127.0.0.1",
+    "host": "192.168.1.33",
     "dialect": "mysql"
   },
   "production": {
