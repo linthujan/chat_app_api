@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
   UserChat.init({
     ...defaultKeys("user_chat_id"),
     type: {
-      type: DataTypes.ENUM(['ADMIN', 'MEMBER']),
+      type: DataTypes.ENUM(['ADMIN', 'MEMBER', 'OPPONENT']),
       allowNull: false,
     },
   }, modelDefaults(sequelize, 'user_chats', {

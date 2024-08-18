@@ -5,6 +5,39 @@ const { defaultKeys, modelDefaults } = require('../sequelize/defaults');
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
+      User.hasMany(models.Device, {
+        foreignKey: 'user_id',
+        sourceKey: 'user_id',
+        as: 'devices',
+      });
+      User.belongsToMany(models.Chat, {
+        through: {
+          model: models.UserChat,
+          unique: false,
+        },
+        foreignKey: 'user_id',
+        sourceKey: 'user_id',
+        targetKey: 'chat_id',
+        otherKey: 'chat_id',
+        scope: {
+          type: 'PRIVATE',
+        },
+        as: 'privateChats',
+      });
+      User.belongsToMany(models.Chat, {
+        through: {
+          model: models.UserChat,
+          unique: false,
+        },
+        foreignKey: 'user_id',
+        sourceKey: 'user_id',
+        targetKey: 'chat_id',
+        otherKey: 'chat_id',
+        scope: {
+          type: 'GROUP',
+        },
+        as: 'groupChats',
+      });
       User.belongsToMany(models.Chat, {
         through: {
           model: models.UserChat,

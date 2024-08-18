@@ -7,6 +7,13 @@
     "dialect": "mysql"
   },
   "local": {
+    "username": "root",
+    "password": "",
+    "database": "chat_app",
+    "host": "localhost",
+    "dialect": "mysql"
+  },
+  "test": {
     "username": "kelaxa",
     "password": "kelaxa@123",
     "database": "chat_app",

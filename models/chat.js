@@ -37,6 +37,20 @@ module.exports = (sequelize, DataTypes) => {
         through: {
           model: models.UserChat,
           unique: false,
+          scope: {
+            type: 'OPPONENT',
+          },
+        },
+        foreignKey: 'chat_id',
+        sourceKey: 'chat_id',
+        targetKey: 'user_id',
+        otherKey: 'user_id',
+        as: 'opponents',
+      });
+      Chat.belongsToMany(models.User, {
+        through: {
+          model: models.UserChat,
+          unique: false,
         },
         foreignKey: 'chat_id',
         sourceKey: 'chat_id',
@@ -72,7 +86,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
     },
     type: {
-      type: DataTypes.ENUM(['SINGLE', 'GROUP']),
+      type: DataTypes.ENUM(['PRIVATE', 'GROUP']),
       allowNull: false,
     },
   }, modelDefaults(sequelize, 'chats'));

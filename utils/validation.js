@@ -143,7 +143,7 @@ module.exports.findModelAndThrow = async (finder, FindModel, options = {}, findM
 module.exports.findModelOrThrow = async (finder, FindModel, options = {}, findModelOrThrowConfig) => {
     const defaultConfig = {
         throwOnDeleted: false,
-        messageOnNotFound: `${FindModel.name} already exist`,
+        messageOnNotFound: `${FindModel.name} not found`,
         messageOnDeleted: `${FindModel.name} is deleted`,
     }
     const config = { ...defaultConfig, ...findModelOrThrowConfig };

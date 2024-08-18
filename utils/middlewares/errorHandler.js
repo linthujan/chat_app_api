@@ -32,7 +32,7 @@ function productionError(res, error) {
 
 function developmentError(res, error) {
     res.status(error.statusCode).json({
-        status: error.status,
+        status: false,
         meta: {
             message: error.message,
         },
@@ -40,4 +40,5 @@ function developmentError(res, error) {
         errorStack: error.stack,
     });
 }
+
 module.exports = errorHandler;

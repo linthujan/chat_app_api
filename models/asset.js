@@ -48,7 +48,8 @@ module.exports = (sequelize, DataTypes) => {
         const base64 = Buffer.from(data).toString('base64');
         const mimetype = this.getDataValue('mimetype');
 
-        return `data:${mimetype};base64,${base64}`;
+        return base64;
+        // return `data:${mimetype};base64,${base64}`;
       },
     }
   }, modelDefaults(sequelize, 'assets'));

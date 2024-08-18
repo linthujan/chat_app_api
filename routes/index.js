@@ -11,6 +11,7 @@ const upload = multer({ storage });
 const userController = require("../controllers/user");
 const authController = require("../controllers/auth");
 const chatController = require("../controllers/chat");
+const deviceController = require("../controllers/device");
 
 //  Configure Routes
 //.......................................................................//
@@ -25,6 +26,9 @@ router.get("/user/:user_id", jwtAuth, userController.getById);
 // Auth
 router.post("/auth/login", authController.login);
 router.get("/auth/profile", jwtAuth, userController.getAuth);
+
+// Firebase
+router.post("/firebase/messaging/register", jwtAuth, deviceController.register);
 
 // Chat
 router.post("/chat", jwtAuth, upload.single('image'), chatController.create);

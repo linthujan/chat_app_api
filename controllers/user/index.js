@@ -3,6 +3,7 @@ const routeHandler = require('../../utils/routeHandler');
 const { findModelOrThrow, validateNullParameters, } = require('../../utils/validation');
 const { STATUS_CODE } = require('../../utils/constants');
 const jwt = require('jsonwebtoken');
+const { sendAppError } = require('../../utils/AppError');
 
 const create = routeHandler(async (req, res, extras) => {
     const {
@@ -19,9 +20,19 @@ const create = routeHandler(async (req, res, extras) => {
         mobile,
     }, { transaction: extras.transaction });
 
+    await user.reload({ transaction: extras.transaction, paranoid: false });
+    if (user.isSoftDeleted()) {
+        await user.restore({ transaction: extras.transaction });
+    }
+
     const token = jwt.sign({ user_id: user.user_id }, process.env.JWT_SECRET, {
         expiresIn: '1h',
     });
+
+    await extras.transaction.commit();
+
+    // return sendAppError(extras, "Passwords not match!", STATUS_CODE.BAD_REQUEST);
+    console.log("token", token, user.user_id);
 
     return res.sendRes({ user, token }, {
         message: 'User created successfully',

@@ -12,62 +12,11 @@ const waitDelay = (delay) => {
     });
 }
 
-// const createGroupTest = async () => {
-//     console.log(`getChat Start`);
-//     const user_id_1 = 'd64f14b2-d0d8-490f-8996-043ee66fb58b';
-//     const user_id_2 = '792a0e19-ae18-4d12-8a92-0dc4f04c8086';
-//     const user_id_3 = '5b526d0e-c669-4678-a2e6-08572a575d50';
-
-//     const user1 = await User.findOne({
-//         where: {
-//             user_id: user_id_1,
-//         },
-//     });
-
-//     const user2 = await User.findOne({
-//         where: {
-//             user_id: user_id_2,
-//         },
-//     });
-
-//     const user3 = await User.findOne({
-//         where: {
-//             user_id: user_id_3,
-//         },
-//     });
-//     const chat = await Chat.create({
-//         name: 'Test Group',
-//         type: 'GROUP',
-//     });
-
-//     await chat.addAdmin(user1);
-//     await chat.addMember(user2);
-
-//     const fs = require('fs');
-//     fs.writeFileSync('chat.json', JSON.stringify(chat));
-
-//     await chat.reload({
-//         include: [
-//             {
-//                 model: User,
-//                 as: 'admins',
-//             },
-//             {
-//                 model: User,
-//                 as: 'members',
-//             },
-//         ],
-//     });
-
-//     fs.writeFileSync('chatReload.json', JSON.stringify(chat));
-// }
-// createGroupTest();
-
 const create = routeHandler(async (req, res, extras) => {
-    const { body: { name, type }, file } = req;
+    const { body: { name, type, mobile }, file } = req;
     const { user_id } = req.auth;
 
-    validateTrue(['SINGLE', 'GROUP'].includes(type));
+    validateTrue(['PRIVATE', 'GROUP'].includes(type));
 
     if (type == 'GROUP') {
         validateNullParameters([name, file]);
@@ -88,8 +37,6 @@ const create = routeHandler(async (req, res, extras) => {
             ],
             transaction: extras.transaction,
         });
-
-        // console.log(`chat`, chat.toJSON());
 
         await chat.setAdmins(req.auth, { transaction: extras.transaction });
 
@@ -115,40 +62,73 @@ const create = routeHandler(async (req, res, extras) => {
 
         return res.sendRes(chat, { message: 'Chat group created successfully', status: STATUS_CODE.OK, });
     }
-    else if (type == 'SINGLE') {
-        // validateNullParameters([ file]);
+    else if (type == 'PRIVATE') {
+        validateNullParameters([mobile]);
 
-        const chat = await Chat.create({
-            name,
-            type: 'GROUP',
-            image: {
-                data: file.buffer,
-                mimetype: file.mimetype,
-            }
-        }, {
+        const opponent = await findModelOrThrow({ mobile }, User, {});
+
+        const findUser = await User.findOne({
+            where: {
+                user_id,
+            },
             include: [
                 {
-                    model: Asset,
-                    as: 'image',
-                }
+                    model: Chat,
+                    as: 'privateChats',
+                    through: { attributes: [] },
+                    include: [
+                        {
+                            model: User,
+                            as: 'opponents',
+                            through: { as: 'userChat' },
+                            where: {
+                                user_id: opponent.user_id,
+                            },
+                            include: [
+                                {
+                                    model: Asset,
+                                    as: 'image',
+                                },
+                            ],
+                        },
+                    ],
+                },
             ],
-            transaction: extras.transaction,
         });
 
-        await chat.setAdmin(req.auth, { transaction: extras.transaction });
+        let chat;
+        if (findUser.privateChats.length) {
+            chat = findUser.privateChats[0];
+        } else {
+            chat = await Chat.create({
+                name,
+                type: 'PRIVATE',
+            }, { transaction: extras.transaction, });
+
+            await chat.setOpponents([req.auth, opponent], { transaction: extras.transaction });
+        }
 
         await chat.reload({
             include: [
                 {
                     model: User,
-                    as: 'admins',
-                },
-                {
-                    model: User,
-                    as: 'members',
+                    as: 'opponents',
+                    through: { as: 'userChat' },
+                    where: {
+                        user_id: { [Op.not]: user_id },
+                    },
+                    include: [
+                        {
+                            model: Asset,
+                            as: 'image',
+                        }
+                    ],
                 },
             ],
+            transaction: extras.transaction,
         });
+
+        await extras.transaction.commit();
 
         return res.sendRes(chat, { message: 'Chat created successfully', status: STATUS_CODE.OK, });
     }
@@ -162,16 +142,39 @@ const getAll = routeHandler(async (req, res, extras) => {
             {
                 model: Chat,
                 as: 'chats',
-                through: { as: 'userChat' },
+                through: { attributes: [] },
                 include: [
                     {
                         model: Asset,
                         as: 'image',
                     },
+                    {
+                        model: User,
+                        as: 'opponents',
+                        through: { as: 'userChat' },
+                        required: false,
+                        where: {
+                            user_id: { [Op.not]: user_id },
+                        },
+                        include: [
+                            {
+                                model: Asset,
+                                as: 'image',
+                            }
+                        ],
+                    },
                 ],
             },
         ],
     }, { throwOnDeleted: true });
+
+    user.chats.forEach(chat => {
+        if (chat.type == 'PRIVATE') {
+            const { image, username } = chat.opponents[0];
+            chat.dataValues.image = image;
+            chat.dataValues.name = username;
+        }
+    })
 
     return res.sendRes(user.chats, { message: 'Chats loaded successfully', status: STATUS_CODE.OK, });
 }, false);

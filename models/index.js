@@ -40,6 +40,7 @@ db.Chat = require("../models/chat")(sequelize, Sequelize.DataTypes);
 db.UserChat = require("../models/user_chat")(sequelize, Sequelize.DataTypes);
 db.Message = require("../models/message")(sequelize, Sequelize.DataTypes);
 db.Asset = require("../models/asset")(sequelize, Sequelize.DataTypes);
+db.Device = require("../models/device")(sequelize, Sequelize.DataTypes);
 
 Object.keys(db).forEach(modelName => {
   if (db[modelName].associate) {
@@ -48,7 +49,7 @@ Object.keys(db).forEach(modelName => {
 });
 
 // sequelize.sync({ force: true }).then(async () => {
-//   seedTag();
+// //   seedTag();
 //   console.log("All models were synchronized successfully.");
 // });
 
