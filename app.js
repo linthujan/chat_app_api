@@ -14,7 +14,7 @@ app.use(cors());
 app.use(successHandler);
 
 app.use("/api", router);
-app.use('/public', express.static('public'))
+app.use('/', express.static('public'))
 app.use('/assets', express.static('assets'))
 
 

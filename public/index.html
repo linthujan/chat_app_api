@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Socket.IO Client</title>
+    <script src="https://tough-terminally-koala.ngrok-free.app/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <h1>Socket.IO Chat</h1>
+    <div id="messages"></div>
+    <form action="">
+        <input type="text" id="url" value="https://tough-terminally-koala.ngrok-free.app" placeholder="Url"><br>
+        <input type="text" id="mobile" placeholder="Mobile">
+        <button type="submit" onclick="event.preventDefault(); connect();">Connect</button>
+    </form>
+    <button type="submit" onclick="disconnect();">Disconnect</button><br>
+
+    <form action="" id="chat_list" onsubmit="joinChat(event);">
+    </form>
+
+    <span><b>Username :</b></span> <label id="username"></label><br>
+    <span><b>Chat Name :</b></span> <label id="chat_name"></label><br>
+    <form action="">
+        <div id="chat_area" style="border: 1px solid black; width: 285px; padding: 10px;">
+
+        </div>
+        <input type="text" id="message" name="message" placeholder="Enter Message">
+        <button type="submit" onclick="event.preventDefault(); sendMessage(event);">Send Message</button><br><br>
+    </form>
+
+    <script>
+        const baseurl = "https://tough-terminally-koala.ngrok-free.app";
+
+        let socket;
+        let token = localStorage.getItem('token');
+        let user = JSON.parse(localStorage.getItem('user') ?? null);
+        let chat = JSON.parse(localStorage.getItem('chat') ?? null);
+        document.getElementById('username').innerText = user?.username;
+        document.getElementById('chat_name').innerText = chat?.name;
+        let chats;
+
+        console.log(`init data :`, { token, user, chat });
+
+        document.getElementById('mobile').value = localStorage.getItem('mobile');
+
+        async function connect() {
+            const url = document.getElementById('url').value;
+            const mobile = document.getElementById('mobile').value;
+
+            const { token: authToken, user: authUser } = await login(mobile);
+            token = authToken;
+            user = authUser;
+
+            localStorage.setItem("mobile", mobile);
+            localStorage.setItem("token", token);
+            localStorage.setItem("user", JSON.stringify(user));
+
+            await init();
+        }
+
+        async function init() {
+            await socket?.disconnect();
+            if (!socket) {
+                socket = io(baseurl, {
+                    extraHeaders: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    auth: {
+                        chatOffset: 0,
+                    },
+                });
+            }
+            else {
+                socket.connect();
+            }
+
+            socket.on('receive_message', (data) => {
+                console.log(`Received :`, data);
+                const { newMessage, from } = data;
+                const fromSelf = newMessage.user_id == user.user_id;
+
+                document.getElementById('chat_area').innerHTML +=
+                    `<div style="display: flex; justify-content: ${fromSelf ? 'end' : 'start'};">
+                        ${fromSelf ? '' : from.username + ' :'}${newMessage.text}</div>`;
+            });
+
+            socket.on('join_chat', (message) => {
+                document.getElementById('chat_area').innerHTML +=
+                    `<div style="display: flex; justify-content: center">
+                        ${message}</div>`;
+            });
+
+            document.getElementById('username').innerText = user?.username;
+            document.getElementById('chat_name').innerText = chat?.name;
+
+            chats = await getChats();
+            console.log(`chats`, chats);
+
+            document.getElementById('chat_list').innerHTML = "<br>";
+            chats.forEach(chat => {
+                document.getElementById('chat_list').innerHTML += `
+                <label for="chat_id">${chat.name}</label>
+                <input type="radio" name="chat_id" id="chat_id" value="${chat.chat_id}">`;
+            });
+            document.getElementById('chat_list').innerHTML += `<br><button type="submit">Join Chat</button><br><br>`;
+
+        }
+
+        function joinChat(event) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const chat_id = formData.get('chat_id');
+
+            chat = chats.find(c => c.chat_id == chat_id);
+            localStorage.setItem("chat", JSON.stringify(chat));
+
+            socket.emit('join_chat', chat_id);
+        }
+
+        function sendMessage(event) {
+            event.preventDefault();
+            if (!chat) {
+                alert("Chat not found");
+            }
+
+            const message = document.getElementById('message').value;
+            socket.emit('send_message', chat.chat_id, { text: message }, "text");
+            document.getElementById('message').value = "";
+        }
+        function disconnect() {
+            socket.disconnect();
+        }
+    </script>
+
+    <script>
+        async function login(mobile) {
+            const response = await fetch(`${baseurl}/api/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    mobile,
+                }),
+            });
+
+            const responseData = await response.json();
+            return responseData.data;
+        }
+        async function getChats() {
+            const response = await fetch(`${baseurl}/api/chat`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            const responseData = await response.json();
+            return responseData.data;
+        }
+
+        if (token && token != '') {
+            init();
+        }
+    </script>
+</body>
+
+</html>

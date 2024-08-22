@@ -36,10 +36,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    status: {
-      type: DataTypes.ENUM(['FAILED', 'PENDING', 'SENT', 'DELIVERED', 'READ']),
-      allowNull: false,
-    },
+    // status: {
+    //   type: DataTypes.ENUM(['FAILED', 'PENDING', 'SENT', 'DELIVERED', 'READ']),
+    //   allowNull: false,
+    // },
   }, modelDefaults(sequelize, 'messages'));
   return Message;
 };
