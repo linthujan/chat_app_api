@@ -1,6 +1,7 @@
 const { Server } = require('socket.io');
 const { verifyJWT } = require('./utils/middlewares/jwtAuth');
 const { User, UserChat, Chat, Message } = require('./models');
+const { instrument } = require('@socket.io/admin-ui');
 
 module.exports = (httpServer) => {
     const io = new Server(httpServer, {
@@ -9,7 +10,9 @@ module.exports = (httpServer) => {
                 "http://localhost:3000",
                 "http://localhost:5500",
                 "https://tough-terminally-koala.ngrok-free.app",
+                "https://admin.socket.io",
             ],
+            credentials: true,
         },
     });
 
@@ -34,6 +37,7 @@ module.exports = (httpServer) => {
                 return next(new Error("Socket.IO authentication failed"));
             }
             socket.auth = user.toJSON();
+            socket.data['username'] = user.username;
             next();
         } catch (error) {
             console.log(error);
@@ -46,6 +50,19 @@ module.exports = (httpServer) => {
 
         const { user_id, username, chats } = socket.auth;
         socket.emit('welcome', `Hello user, ${username}`, chats);
+
+        socket.on("disconnecting", (reason) => {
+            console.log(`reason`, reason);
+
+            for (const room of socket.rooms) {
+                if (room !== socket.auth.user_id) {
+                    console.log("user has left from", room);
+                    socket.broadcast.to(room).emit('join_chat', `${socket.auth.username} left from chat`);
+
+                    // socket.to(room).emit("join_chat", socket.id);
+                }
+            }
+        });
 
         socket.on('join_chat', async (chat_id) => {
             try {
@@ -66,6 +83,11 @@ module.exports = (httpServer) => {
             }
         });
 
+        socket.on('typing', async (chat_id) => {
+            const { user_id, username } = socket.auth;            
+            socket.broadcast.to(chat_id).emit('typing', user_id, `${username} is typing`);
+        });
+
         socket.on('send_message', async (to, message, type) => {
             try {
                 const { user_id, username } = socket.auth;
@@ -76,7 +98,7 @@ module.exports = (httpServer) => {
                     text: message.text,
                 });
 
-                io.in(to).fetchSockets().then(sockets => {
+                io.in(message.to).fetchSockets().then(sockets => {
                     console.log("Sockets in this room :");
 
                     sockets.forEach(socket => {
@@ -84,13 +106,13 @@ module.exports = (httpServer) => {
                     });
                 });
 
-                const sockets = await socket.to(to).fetchSockets()
+                const sockets = await socket.to(message.to).fetchSockets()
                 sockets.forEach((soc, i) => {
                     console.log(`Receiver ${i + 1}`, soc.auth.username, soc.auth.user_id);
                     console.log(soc.id);
                 });
 
-                socket.to(to).emit('receive_message', {
+                socket.to(message.to).emit('receive_message', {
                     newMessage,
                     from: socket.auth,
                 });
@@ -100,13 +122,17 @@ module.exports = (httpServer) => {
             }
         });
     });
+
+    instrument(io, {
+        auth: false,
+        mode: "development",
+    });
 }
 
 const joinToRooms = async (socket) => {
-    socket.leave(socket.id);
     socket.auth.chats.forEach(chat => {
-        console.log("Re-Joining Room :", chat.name, chat.chat_id, "Socket :", socket.id);
-        socket.join(chat.chat_id);
+        console.log("Re-Joining Room :", chat.name.toUpperCase(), chat.chat_id, "Socket :", socket.id);
+        socket.join(chat.name.toUpperCase());
     });
 
     console.log("Joined Rooms :");
@@ -114,5 +140,5 @@ const joinToRooms = async (socket) => {
         console.log(room);
     });
 
-    socket.join(socket.auth.user_id);
+    socket.join(socket.auth.username);
 }
