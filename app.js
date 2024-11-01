@@ -21,7 +21,9 @@ app.use('/assets', express.static('assets'))
 app.all("*", (req, res) => {
     res.status(404).send({
         status: false,
-        message: `The route URL ${req.originalUrl} does not exists`,
+        meta: {
+            message: `The route URL ${req.originalUrl} does not exists`,
+        },
     });
 })
 
