@@ -22,7 +22,7 @@ app.all("*", (req, res) => {
     res.status(404).send({
         status: false,
         meta: {
-            message: `The route URL ${req.originalUrl} does not exists 123`,
+            message: `The route URL ${req.originalUrl} does not exists`,
         },
     });
 })
